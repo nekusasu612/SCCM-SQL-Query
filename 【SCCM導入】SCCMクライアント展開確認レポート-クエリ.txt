@@ -1,0 +1,40 @@
+--【SCCM導入】SCCMクライアント展開確認レポート
+select distinct
+COMB.Name as '端末名',
+CASE
+WHEN 1 = COMB.ISClient THEN 'TRUE'
+ELSE 'FALSE' end as 'SCCMクライアント',
+CASE
+WHEN 1 = ClientCheckPass THEN 'Client is healthy'
+ELSE 'Client is unhealthy' end as 'クライアントチェック結果',
+ClientRemediationSuccess as '自動修復',
+CASE
+WHEN 1 = EP_DeploymentState THEN 'Unmanaged'
+WHEN 2 = EP_DeploymentState THEN 'To Be Installed'
+WHEN 3 = EP_DeploymentState THEN 'Managed'
+WHEN 4 = EP_DeploymentState THEN 'Install With Error'
+WHEN 5 = EP_DeploymentState THEN 'Reboot Pending'
+ELSE '不明' end as 'Endpoint Protectionの展開状態',
+EP_ClientVersion as 'マルウェア対策クライアントのバージョン',
+EP_EngineVersion as 'Endpoint Protectionのエンジンのバージョン',
+EP_AntivirusSignatureVersion as 'Endpoint Protection定義の最新バージョン',
+EP_antivirussignatureupdatedateTime as 'Endpoint Protectionの最終更新時間',
+PrimaryUser as 'プライマリユーザー',
+CurrentLogonUser as 'カレントユーザー',
+LastLogonUser as '最終ログインユーザー',
+IPアドレス = Stuff ((select ', ' + NA1.IP_Addresses0 from v_RA_System_IPAddresses as NA1 
+where NA1.ResourceID = COMB.MachineID FOR XML PATH ('')) , 1, 1, ''),
+LastMPserverName as '接続先MP',
+LastpolicyRequest as 'ポリシー要求最終日時',
+LastSoftwareScan as 'ソフトウェアインベントリ取得時刻',
+CNLastOfflineTime as '最終オフライン時刻',
+CNLastOnlineTime as '最終オンライン時刻',
+ADLastlogonTime as 'AD最終アクセス時刻',
+LastActiveTime as '最終アクティブ時刻'
+from
+vSMS_CombinedDeviceResources AS COMB
+INNER JOIN v_RA_System_IPAddresses as NT
+on COMB.MachineID  = NT.ResourceID
+JOIN v_FullCollectionMembership fcm on fcm.resourceid = COMB.MachineID
+Where fcm.CollectionID = @Collection
+Order by COMB.Name ASC;

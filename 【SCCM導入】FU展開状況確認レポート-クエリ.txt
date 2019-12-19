@@ -1,0 +1,40 @@
+-- FU展開状況確認レポート
+select distinct
+COMB.Name as '端末名',
+ClientVersion as 'SCCMクライアントver',
+
+CASE
+WHEN 1 = ClientCheckPass THEN 'Client is healthy'
+ELSE 'Client is unhealthy' end as 'クライアントチェック結果',
+LastClientCheckTime as 'クライアントチェック日時',
+
+CASE
+WHEN 1 = StatusType THEN 'Compliant'
+WHEN 2 = StatusType THEN 'In Progress'
+WHEN 3 = StatusType THEN 'Error'
+WHEN 4 = StatusType THEN 'Unknown'
+ELSE '不明' end as '更新プログラム適用状況',
+
+LastEnforcementMessageDesc as '適用状況メッセージ',
+LastEnforcementErrorID as '適用状況エラーID',
+LastEnforcementErrorCode as '適用状況エラーコード',
+LastComplianceMessageTime as '適用状況出力日時',
+
+DeviceOS as 'デバイスOS',
+DeviceOSBuild as 'OSBuild',
+
+ADLastlogonTime as 'AD最終アクセス時刻',
+CNLastOnlineTime as '最終オンライン時刻',
+CNLastOfflineTime as '最終オフライン時刻',
+LastActiveTime as '最終アクティブ時刻',
+LastpolicyRequest as 'ポリシー要求最終日時',
+PrimaryUser as 'プライマリユーザー',
+CurrentLogonUser as 'カレントユーザー',
+LastLogonUser as '最終ログインユーザー'
+
+from
+vSMS_CombinedDeviceResources AS COMB
+INNER JOIN vSMS_SUMDeploymentStatusPerAsset as SUG
+on COMB.MachineID  = SUG.ResourceID
+Where SUG.AssignmentName = @AssignmentName
+Order by COMB.Name ASC;
